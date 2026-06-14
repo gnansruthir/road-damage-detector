@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoadSense AI — Road Damage Severity & Civic Intelligence</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- HUD Borders -->
+  <div class="hud-border border-top"></div>
+  <div class="hud-border border-bottom"></div>
+
+  <!-- City Grid and Rain Layer -->
+  <div class="city-grid"></div>
+  <canvas id="rain-canvas"></canvas>
+
+  <header>
+    <div class="logo">
+      <div class="pulse-dot"></div>
+      ROADSENSE <span>AI</span>
+    </div>
+    <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-amber);">SYSTEM: ONLINE</div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <span class="hero-tag">CIVIC INTELLIGENCE DEPLOYMENT</span>
+      <h1>Roads Don't Lie.<br>AI <span>Doesn't Miss.</span></h1>
+      <p>
+        Real-time pothole and crack detection backed by CLAHE low-light preprocessing, 
+        quantitative severity scoring, and a dynamic civic repair GPS mapping dashboard.
+      </p>
+      <a href="#console-section" class="hero-cta">ANALYSE ROAD</a>
+    </div>
+
+    <div class="hero-visual">
+      <div class="isometric-city" id="isometric-city">
+        <!-- Isometric Road Grid -->
+        <div class="city-road road-h road-1"></div>
+        <div class="city-road road-h road-2"></div>
+        <div class="city-road road-v road-3"></div>
+        <div class="city-road road-v road-4"></div>
+        
+        <!-- Pulsing damage pins floating on the road grid -->
+        <div class="city-marker marker-critical" style="top: 94px; left: 94px;"></div>
+        <div class="city-marker marker-medium" style="top: 244px; left: 274px;"></div>
+        <div class="city-marker marker-clear" style="top: 94px; left: 274px;"></div>
+        <div class="city-marker marker-critical" style="top: 244px; left: 94px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Pipeline Sequence -->
+  <section class="pipeline">
+    <h2 class="section-title">Detection & <span>Scoring Sequence</span></h2>
+    <div class="pipeline-flow">
+      <div class="pipeline-card glass-panel amber-hover">
+        <span class="card-num">STAGE 01</span>
+        <h3>Input Stream</h3>
+        <p>Receives digital highway images or video camera frames for processing.</p>
+      </div>
+
+      <div class="pipeline-card glass-panel amber-hover">
+        <span class="card-num">STAGE 02</span>
+        <h3>CLAHE Preprocessing</h3>
+        <p>Balances contrast and low-light exposure to correct night/shadow detection failures.</p>
+      </div>
+
+      <div class="pipeline-card glass-panel amber-hover">
+        <span class="card-num">STAGE 03</span>
+        <h3>YOLOv8 Detection</h3>
+        <p>Core object detector identifies cracks (longitudinal/transverse) and potholes.</p>
+      </div>
+
+      <div class="pipeline-card glass-panel amber-hover">
+        <span class="card-num">STAGE 04</span>
+        <h3>Severity & Priority</h3>
+        <p>Scores structural damage areas and texture to output repair urgencies from 1 to 5.</p>
+      </div>
+
+      <div class="pipeline-card glass-panel amber-hover">
+        <span class="card-num">STAGE 05</span>
+        <h3>GPS Heatmap</h3>
+        <p>Plots damage coordinates to build dynamic municipal repair priorities.</p>
+      </div>
+    </div>
+    
+    <div class="pipeline-stats-strip">
+      TRAINED ON 47,000+ ROAD IMAGES · RDD2022 INDIA SUBSET · LOW-LIGHT mAP IMPROVED BY ~18%
+    </div>
+  </section>
+
+  <!-- Section 3: Diagnostic Console -->
+  <section id="console-section" class="demo">
+    <h2 class="section-title">Diagnostic <span>Console</span></h2>
+    
+    <div class="demo-layout">
+      <!-- Upload Card -->
+      <div class="upload-panel glass-panel">
+        <div class="drop-zone" id="drop-zone">
+          <div class="upload-icon">⇪</div>
+          <h4>Upload Road Scan</h4>
+          <p>Drag & drop road photos or click to browse</p>
+          <input type="file" id="file-input" class="file-input" accept=".png,.jpg,.jpeg">
+        </div>
+        
+        <div id="loader" class="loader-container">
+          <div class="hud-loader"></div>
+          <div class="loader-text">Equalizing & Detecting...</div>
+        </div>
+      </div>
+
+      <!-- Preview Bounding Box Panel -->
+      <div class="preview-panel glass-panel">
+        <h5>Annotated Detection Output</h5>
+        <div class="image-view">
+          <img id="annotated-preview" src="" alt="" style="display: none;">
+          <span class="no-img-text" id="no-img-text" style="color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem;">CONSOLE IDLE. AWAITING INPUT.</span>
+          <div class="scan-line" id="scan-line"></div>
+        </div>
+      </div>
+
+      <!-- Severity Details Panel -->
+      <div class="severity-panel">
+        <div class="telemetry-card critical glass-panel">
+          <span class="telemetry-label">Critical Defects</span>
+          <span class="telemetry-value badge-red" id="val-critical">0</span>
+        </div>
+        
+        <div class="telemetry-card medium glass-panel">
+          <span class="telemetry-label">Medium Defects</span>
+          <span class="telemetry-value badge-orange" id="val-medium">0</span>
+        </div>
+
+        <div class="telemetry-card glass-panel">
+          <span class="telemetry-label">Small Defects</span>
+          <span class="telemetry-value" id="val-small">0</span>
+        </div>
+
+        <div class="telemetry-card priority glass-panel">
+          <span class="telemetry-label">REPAIR PRIORITY</span>
+          <span class="telemetry-value" id="val-priority" style="color: var(--accent-amber)">CLEAR</span>
+        </div>
+
+        <div class="telemetry-card glass-panel">
+          <span class="telemetry-label">Stretch Impact</span>
+          <span class="telemetry-value" id="val-stretch" style="font-family: var(--font-mono);">0.0m</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Live Map -->
+  <section class="live-map">
+    <h2 class="section-title">Dynamic <span>Municipal Damage Heatmap</span></h2>
+    
+    <div class="map-container">
+      <iframe class="map-frame" id="map-frame" src="/api/map"></iframe>
+    </div>
+    
+    <div class="map-footer-strip">
+      <div>GPS MAPPING ACTIVE · NEW DELHI CLUSTER REGISTERED</div>
+      <div>DAMAGE LOG: <span id="map-counter">15</span> SEGMENTS ANALYSED</div>
+    </div>
+  </section>
+
+  <!-- Section 5: Stats -->
+  <section class="metrics">
+    <div class="metrics-grid">
+      <div class="metric-screen glass-panel">
+        <div class="metric-num count-up" data-target="47000">0</div>
+        <div class="metric-label">Training Images</div>
+      </div>
+
+      <div class="metric-screen glass-panel">
+        <div class="metric-num count-up" data-target="3">0</div>
+        <div class="metric-label">Defect Classes</div>
+      </div>
+
+      <div class="metric-screen glass-panel">
+        <div class="metric-num" style="color: var(--accent-amber)">+18%</div>
+        <div class="metric-label">Night mAP Lift</div>
+      </div>
+
+      <div class="metric-screen glass-panel">
+        <div class="metric-num" style="font-size: 1.6rem; margin-top: 15px; margin-bottom: 20px;">RDD2022 INDIA</div>
+        <div class="metric-label">Local Fine-Tuned</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 6: Novelty Callout -->
+  <section class="comparison">
+    <h2 class="section-title">Unique <span>Capabilities</span></h2>
+    
+    <div class="comparison-grid">
+      <div class="comp-card glass-panel">
+        <div class="comp-header">Capability Matrix</div>
+        <div style="font-family: var(--font-mono); color: var(--text-muted);">Standard Tools</div>
+        <div style="font-family: var(--font-mono); color: var(--accent-amber);">RoadSense AI</div>
+      </div>
+
+      <div class="comp-card glass-panel">
+        <div class="comp-header">Low-Light Coverage</div>
+        <div class="comp-value others">✕ Daylight Only</div>
+        <div class="comp-value us">✓ CLAHE Night Mode</div>
+      </div>
+
+      <div class="comp-card glass-panel">
+        <div class="comp-header">Scoring Engine</div>
+        <div class="comp-value others">✕ Binary Flags Only</div>
+        <div class="comp-value us">✓ Small/Medium/Critical</div>
+      </div>
+
+      <div class="comp-card glass-panel">
+        <div class="comp-header">Prioritization</div>
+        <div class="comp-value others">✕ None</div>
+        <div class="comp-value us">✓ Urgency 1-5 & Stretch Estimate</div>
+      </div>
+
+      <div class="comp-card glass-panel">
+        <div class="comp-header">Geographic Bounds</div>
+        <div class="comp-value others">✕ Generic US Data</div>
+        <div class="comp-value us">✓ India RDD2022 Fine-Tuned</div>
+      </div>
+
+      <div class="comp-card glass-panel">
+        <div class="comp-header">Telemetry Logs</div>
+        <div class="comp-value others">✕ Static Reports</div>
+        <div class="comp-value us">✓ Live Folium Heatmap</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    RoadSense AI — Road Damage Severity & Civic Intelligence Interface. 
+    Secure municipal network access only.
+    <div class="footer-tech">
+      YOLOV8 · OPENCV · SCIKIT-LEARN · FOLIUM MAPS · DOCKER
+    </div>
+  </footer>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# YOLO weights & downloads
+*.pt
+runs/
+
+# Dynamic uploads and output heatmaps
+static/uploads/*
+static/output/*
+test_sample.png
+samples/sample_road.png
+
+!static/uploads/.gitkeep
+!static/output/.gitkeep
+!weights/.gitkeep
+
+.DS_Store
+.vscode/
