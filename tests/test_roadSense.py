@@ -47,6 +47,17 @@ def test_defect_detector(dummy_image):
     assert "class" in detections[0]
     assert "confidence" in detections[0]
 
+
+def test_detector_returns_empty_on_blank_input():
+    """Verifies the detector does not fabricate a fake defect when no real damage is present."""
+    detector = RoadDamageDetector()
+    blank = np.zeros((300, 300, 3), dtype=np.uint8)
+
+    detections = detector.detect(blank)
+
+    assert detections == []
+
+
 def test_severity_scorer(dummy_image):
     """Verifies severity calculation and priority routing."""
     detector = RoadDamageDetector()

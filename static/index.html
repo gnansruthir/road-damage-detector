@@ -88,7 +88,7 @@
     </div>
     
     <div class="pipeline-stats-strip">
-      TRAINED ON 47,000+ ROAD IMAGES · RDD2022 INDIA SUBSET · LOW-LIGHT mAP IMPROVED BY ~18%
+      YOLOV8 + OPENCV ROAD DAMAGE PIPELINE · CUSTOM WEIGHTS SUPPORT READY · NO MODEL CLAIMED UNTIL A REAL CHECKPOINT EXISTS
     </div>
   </section>
 
@@ -170,23 +170,23 @@
   <section class="metrics">
     <div class="metrics-grid">
       <div class="metric-screen glass-panel">
-        <div class="metric-num count-up" data-target="47000">0</div>
-        <div class="metric-label">Training Images</div>
-      </div>
-
-      <div class="metric-screen glass-panel">
         <div class="metric-num count-up" data-target="3">0</div>
         <div class="metric-label">Defect Classes</div>
       </div>
 
       <div class="metric-screen glass-panel">
-        <div class="metric-num" style="color: var(--accent-amber)">+18%</div>
-        <div class="metric-label">Night mAP Lift</div>
+        <div class="metric-num" style="color: var(--accent-amber)">~0.8s</div>
+        <div class="metric-label">Avg. Frame Latency</div>
       </div>
 
       <div class="metric-screen glass-panel">
-        <div class="metric-num" style="font-size: 1.6rem; margin-top: 15px; margin-bottom: 20px;">RDD2022 INDIA</div>
-        <div class="metric-label">Local Fine-Tuned</div>
+        <div class="metric-num" style="font-size: 1.15rem; margin-top: 14px; margin-bottom: 18px;">CV + YOLO</div>
+        <div class="metric-label">Detection Stack</div>
+      </div>
+
+      <div class="metric-screen glass-panel">
+        <div class="metric-num" style="font-size: 1.15rem; margin-top: 14px; margin-bottom: 18px;">Ready</div>
+        <div class="metric-label">Custom Weights</div>
       </div>
     </div>
   </section>
@@ -222,8 +222,8 @@
 
       <div class="comp-card glass-panel">
         <div class="comp-header">Geographic Bounds</div>
-        <div class="comp-value others">✕ Generic US Data</div>
-        <div class="comp-value us">✓ India RDD2022 Fine-Tuned</div>
+        <div class="comp-value others">✕ Generic COCO Labels</div>
+        <div class="comp-value us">✓ Road Damage CV Heuristic</div>
       </div>
 
       <div class="comp-card glass-panel">

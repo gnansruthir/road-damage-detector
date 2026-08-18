@@ -1,12 +1,13 @@
 # RoadSense AI — Road Damage Severity & Civic Intelligence
 
-RoadSense AI is an urban operations dashboard designed to monitor road network health in real time. It utilizes fine-tuned YOLOv8 object detection combined with localized CLAHE (Contrast Limited Adaptive Histogram Equalization) image enhancement, a geometric-texture severity analyzer, and an interactive Folium GPS map dashboard.
+RoadSense AI is an urban operations dashboard designed to monitor road network health in real time. It combines OpenCV-based crack and pothole detection with optional YOLOv8 inference support for a real fine-tuned checkpoint when one is available, plus CLAHE preprocessing, a geometric-texture severity analyzer, and an interactive Folium GPS map dashboard.
 
 ---
 
 ## Key Features
-- **YOLOv8 Damage Detection**: Fine-tuned on the RDD2022 India dataset to classify road defects (Pothole, Longitudinal Crack, Transverse Crack).
-- **CLAHE Low-Light Fix**: An OpenCV preprocessing pipeline that normalizes contrast under night or heavy shadow conditions, addressing the #1 failure mode in road object detection literature to improve low-light mAP by ~18%.
+- **YOLOv8 Damage Detection**: Supports custom road-damage checkpoints when a trained model is supplied. No fine-tuned RDD2022 checkpoint is included in this repository yet.
+- **CV-Heuristic Fallback**: Uses contour analysis and edge detection to identify potholes and cracks from visual structure without relying on unrelated COCO labels or fabricated confidence scores.
+- **CLAHE Low-Light Fix**: An OpenCV preprocessing pipeline that normalizes contrast under night or heavy shadow conditions to improve visibility before defect detection.
 - **Severity Scoring Engine**: Calculates damage scale relative to the lane width and analyzes texture roughness (using grayscale standard deviation) to grade repairs as *Small*, *Medium*, or *Critical*.
 - **Repair Priority Telemetry**: Assigns a civic repair priority index from `1` (Monitor) to `5` (Immediate Emergency) and estimates the affected stretch.
 - **Folium GPS Heatmap**: Renders an interactive Leaflet map using dark CartoDB tiles. Integrates a density heatmap and drops dynamic, color-coded status pins.
