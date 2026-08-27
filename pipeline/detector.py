@@ -9,6 +9,7 @@ class RoadDamageDetector:
         self.weights_path = weights_path
         self.use_yolo = False
         self.model = None
+        self.last_mode = "cv_fallback"
 
         try:
             from ultralytics import YOLO
@@ -30,6 +31,7 @@ class RoadDamageDetector:
         """
         h, w, _ = image_bgr.shape
         detections = []
+        self.last_mode = "cv_fallback"
 
         if self.use_yolo and self.model:
             try:
@@ -55,6 +57,8 @@ class RoadDamageDetector:
                         "class": class_name,
                         "confidence": conf
                     })
+                if detections:
+                    self.last_mode = "yolo"
             except Exception as e:
                 print(f"YOLO inference error: {e}. Falling back to OpenCV detection.")
                 self.use_yolo = False
@@ -97,4 +101,6 @@ class RoadDamageDetector:
                         if count >= 10:
                             return detections
 
+        if self.last_mode != "yolo":
+            self.last_mode = "cv_fallback"
         return detections

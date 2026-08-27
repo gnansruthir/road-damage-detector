@@ -56,6 +56,7 @@ def test_detector_returns_empty_on_blank_input():
     detections = detector.detect(blank)
 
     assert detections == []
+    assert detector.last_mode == "cv_fallback"
 
 
 def test_detector_loads_and_runs_yolo_checkpoint(tmp_path):
@@ -70,6 +71,7 @@ def test_detector_loads_and_runs_yolo_checkpoint(tmp_path):
     detections = detector.detect(np.zeros((64, 64, 3), dtype=np.uint8))
 
     assert detector.use_yolo is True
+    assert detector.last_mode == "cv_fallback"
     assert isinstance(detections, list)
 
 
@@ -118,5 +120,6 @@ def test_api_routes(dummy_image):
     assert upload_response.status_code == 200
     data = upload_response.json()
     assert data["success"] is True
+    assert data["mode"] == "cv_fallback"
     assert "annotated_image" in data
     assert "repair_priority" in data

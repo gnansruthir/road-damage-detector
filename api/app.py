@@ -161,6 +161,7 @@ async def detect_damage(file: UploadFile = File(...)):
         
     return {
         "success": True,
+        "mode": detector.last_mode,
         "original_image": f"/static/uploads/{file_id}{ext}",
         "clahe_image": f"/static/output/clahe_{file_id}{ext}",
         "annotated_image": f"/static/output/annotated_{file_id}{ext}",
