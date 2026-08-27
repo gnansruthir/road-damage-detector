@@ -1,6 +1,5 @@
 import os
 import uuid
-import shutil
 import threading
 import time
 from io import BytesIO

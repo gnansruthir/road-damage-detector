@@ -77,6 +77,8 @@ The application uses the OpenCV heuristic fallback unless a compatible three-cla
 checkpoint is supplied through `MODEL_WEIGHTS_PATH` or placed at `weights/best.pt`.
 The unauthenticated `/api/detect` endpoint is intended for demos; production deployments
 should add authentication, rate limiting, and durable storage before exposing it publicly.
+Map state is held in memory and rendered to one HTML file, so the included locking is
+safe within a single process; multi-worker deployments should use shared durable storage.
 
 ---
 
