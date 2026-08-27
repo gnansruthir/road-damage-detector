@@ -27,10 +27,10 @@
   <section class="hero">
     <div class="hero-content">
       <span class="hero-tag">CIVIC INTELLIGENCE DEPLOYMENT</span>
-      <h1>Roads Don't Lie.<br>AI <span>Doesn't Miss.</span></h1>
+      <h1>Roads Don't Lie.<br>Detect Damage <span>In Real Time.</span></h1>
       <p>
         Real-time pothole and crack detection backed by CLAHE low-light preprocessing, 
-        quantitative severity scoring, and a dynamic civic repair GPS mapping dashboard.
+        quantitative severity scoring, and an EXIF-based civic repair map when source GPS is available.
       </p>
       <a href="#console-section" class="hero-cta">ANALYSE ROAD</a>
     </div>
@@ -70,8 +70,8 @@
 
       <div class="pipeline-card glass-panel amber-hover">
         <span class="card-num">STAGE 03</span>
-        <h3>YOLOv8 Detection</h3>
-        <p>Core object detector identifies cracks (longitudinal/transverse) and potholes.</p>
+          <h3>Detection</h3>
+          <p>Uses a configured road-damage YOLOv8 checkpoint when available, otherwise OpenCV heuristics.</p>
       </div>
 
       <div class="pipeline-card glass-panel amber-hover">
@@ -82,8 +82,8 @@
 
       <div class="pipeline-card glass-panel amber-hover">
         <span class="card-num">STAGE 05</span>
-        <h3>GPS Heatmap</h3>
-        <p>Plots damage coordinates to build dynamic municipal repair priorities.</p>
+        <h3>EXIF GPS Map</h3>
+        <p>Plots verified image coordinates when source photos contain GPS metadata.</p>
       </div>
     </div>
     
@@ -154,15 +154,15 @@
 
   <!-- Section 4: Live Map -->
   <section class="live-map">
-    <h2 class="section-title">Dynamic <span>Municipal Damage Heatmap</span></h2>
+    <h2 class="section-title">Verified <span>Civic Damage Map</span></h2>
     
     <div class="map-container">
       <iframe class="map-frame" id="map-frame" src="/api/map"></iframe>
     </div>
     
     <div class="map-footer-strip">
-      <div>GPS MAPPING ACTIVE · NEW DELHI CLUSTER REGISTERED</div>
-      <div>DAMAGE LOG: <span id="map-counter">15</span> SEGMENTS ANALYSED</div>
+      <div>EXIF GPS ONLY · NO LOCATION SIMULATION</div>
+      <div>DAMAGE LOG: <span id="map-counter">0</span> SEGMENTS ANALYSED</div>
     </div>
   </section>
 
@@ -175,8 +175,8 @@
       </div>
 
       <div class="metric-screen glass-panel">
-        <div class="metric-num" style="color: var(--accent-amber)">~0.8s</div>
-        <div class="metric-label">Avg. Frame Latency</div>
+        <div class="metric-num" style="color: var(--accent-amber)">N/A</div>
+        <div class="metric-label">Latency Until Benchmarked</div>
       </div>
 
       <div class="metric-screen glass-panel">
@@ -229,7 +229,7 @@
       <div class="comp-card glass-panel">
         <div class="comp-header">Telemetry Logs</div>
         <div class="comp-value others">✕ Static Reports</div>
-        <div class="comp-value us">✓ Live Folium Heatmap</div>
+        <div class="comp-value us">✓ EXIF-Grounded Folium Map</div>
       </div>
     </div>
   </section>

@@ -1,16 +1,16 @@
 # RoadSense AI — Road Damage Severity & Civic Intelligence
 
-RoadSense AI is an urban operations dashboard designed to monitor road network health in real time. It combines OpenCV-based crack and pothole detection with optional YOLOv8 inference support for a real fine-tuned checkpoint when one is available, plus CLAHE preprocessing, a geometric-texture severity analyzer, and an interactive Folium GPS map dashboard.
+RoadSense AI is an urban operations dashboard designed to monitor road network health in real time. It combines OpenCV-based crack and pothole detection with optional YOLOv8 inference support for a real fine-tuned checkpoint when one is available, plus CLAHE preprocessing, a geometric-texture severity analyzer, and an EXIF-grounded Folium civic map.
 
 ---
 
 ## Key Features
-- **YOLOv8 Damage Detection**: Supports custom road-damage checkpoints when a trained model is supplied. No fine-tuned RDD2022 checkpoint is included in this repository yet.
+- **YOLOv8 Damage Detection**: Supports custom road-damage checkpoints when a trained model is supplied. No fine-tuned RDD2022 checkpoint or measured model result is included in this repository yet.
 - **CV-Heuristic Fallback**: Uses contour analysis and edge detection to identify potholes and cracks from visual structure without relying on unrelated COCO labels or fabricated confidence scores.
 - **CLAHE Low-Light Fix**: An OpenCV preprocessing pipeline that normalizes contrast under night or heavy shadow conditions to improve visibility before defect detection.
 - **Severity Scoring Engine**: Calculates damage scale relative to the lane width and analyzes texture roughness (using grayscale standard deviation) to grade repairs as *Small*, *Medium*, or *Critical*.
 - **Repair Priority Telemetry**: Assigns a civic repair priority index from `1` (Monitor) to `5` (Immediate Emergency) and estimates the affected stretch.
-- **Folium GPS Heatmap**: Renders an interactive Leaflet map using dark CartoDB tiles. Integrates a density heatmap and drops dynamic, color-coded status pins.
+- **EXIF-Grounded Civic Map**: Renders an interactive Leaflet map using only GPS coordinates found in uploaded image EXIF metadata. Images without GPS produce no map point.
 - **Urban Command Center UI**: Near-black theme (`#060608`, `#0D0D12`) featuring isometric grid layouts, rain effects, 3-column live demo consoles, and real-time civic statistics.
 
 ---
@@ -25,7 +25,7 @@ RoadSense AI is an urban operations dashboard designed to monitor road network h
                          └─────────┬─────────┘
                                    │
                          ┌─────────▼─────────┐
-                         │ YOLOv8 Detector   │ (Pothole & crack boundaries)
+                         │ Detector          │ (YOLOv8 checkpoint or CV fallback)
                          └─────────┬─────────┘
                                    │
                          ┌─────────▼─────────┐
@@ -79,6 +79,22 @@ The unauthenticated `/api/detect` endpoint is intended for demos; production dep
 should add authentication, rate limiting, and durable storage before exposing it publicly.
 Map state is held in memory and rendered to one HTML file, so the included locking is
 safe within a single process; multi-worker deployments should use shared durable storage.
+
+## Training and Measurement
+
+The repository does not contain RDD2022 data or claim a completed fine-tuning run. Prepare
+a genuine RDD2022-derived Ultralytics dataset with documented `train` and `val` splits, then run:
+
+```bash
+python train.py --data path/to/rdd2022.yaml --epochs 100 --device 0
+python eval.py --weights runs/road_damage/rdd2022_india/weights/best.pt --data path/to/rdd2022.yaml
+python benchmark.py --weights runs/road_damage/rdd2022_india/weights/best.pt --image path/to/validation.jpg --device 0
+```
+
+`eval.py` writes measured mAP values to `RESULTS.md`, and `benchmark.py` writes measured
+latency statistics to `BENCHMARK.md`. Those files should only be published after the commands
+are run against the real dataset and target hardware. The map is an EXIF GPS map, not a live
+location feed; photos without coordinates are intentionally omitted.
 
 ---
 

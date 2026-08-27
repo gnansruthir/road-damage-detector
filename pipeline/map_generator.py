@@ -1,56 +1,32 @@
 import folium
 from folium.plugins import HeatMap
-import random
 
-# Center coordinates for simulated smart city network (New Delhi area)
+# Default map view only; findings are added only with real coordinates.
 CITY_CENTER = [28.6139, 77.2090]
 
 class CivicMapGenerator:
     def __init__(self, center_lat=28.6139, center_lng=77.2090):
         self.center = [center_lat, center_lng]
-        # Store active damage list: each item is [lat, lng, weight, class, priority]
-        self.damages = self._generate_mock_damages()
+        self.damages = []
 
-    def _generate_mock_damages(self):
-        """Generates pre-existing GPS-tagged damages for the heatmap visualization."""
-        mock_list = []
-        # Generate 15 points clustered near center
-        for _ in range(15):
-            lat = self.center[0] + random.uniform(-0.015, 0.015)
-            lng = self.center[1] + random.uniform(-0.015, 0.015)
-            severity = random.choice(["Critical", "Medium", "Small"])
-            weight = 0.9 if severity == "Critical" else 0.5 if severity == "Medium" else 0.2
-            mock_list.append({
-                "lat": lat,
-                "lng": lng,
-                "weight": weight,
-                "class": random.choice(["Pothole", "Longitudinal Crack", "Transverse Crack"]),
-                "severity": severity,
-                "priority": random.choice([3, 4, 5])
-            })
-        return mock_list
-
-    def add_damage_point(self, severity, class_name, priority):
-        """Adds a newly detected damage point near the center and returns its coords."""
-        lat = self.center[0] + random.uniform(-0.005, 0.005)
-        lng = self.center[1] + random.uniform(-0.005, 0.005)
+    def add_damage_point(self, severity, class_name, priority, latitude, longitude):
+        """Adds a finding at coordinates extracted from the source image."""
         weight = 1.0 if severity == "Critical" else 0.6 if severity == "Medium" else 0.3
         
         point = {
-            "lat": lat,
-            "lng": lng,
+            "lat": latitude,
+            "lng": longitude,
             "weight": weight,
             "class": class_name,
             "severity": severity,
             "priority": priority
         }
         self.damages.append(point)
-        return lat, lng
+        return latitude, longitude
 
     def generate_map_html(self, output_path=None):
         """
-        Creates the Folium map with Dark Matter tiles, a heatmap layer,
-        and custom pulsing markers.
+        Creates the Folium map with Dark Matter tiles and real GPS findings.
         """
         # Create map with CartoDB Dark Matter tiles for the "Command Room" aesthetic
         m = folium.Map(

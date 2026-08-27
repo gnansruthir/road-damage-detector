@@ -43,7 +43,12 @@ class RoadDamageDetector:
                     coords = box.xyxy[0].cpu().numpy()
                     conf = float(box.conf[0].cpu().numpy())
                     cls_id = int(box.cls[0].cpu().numpy())
-                    class_name = results.names.get(cls_id, DAMAGE_CLASSES[cls_id % len(DAMAGE_CLASSES)]) if isinstance(results.names, dict) else results.names[cls_id]
+                    if isinstance(results.names, dict):
+                        class_name = results.names.get(cls_id)
+                    else:
+                        class_name = results.names[cls_id] if cls_id < len(results.names) else None
+                    if class_name is None:
+                        continue
 
                     detections.append({
                         "bbox": [int(coords[0]), int(coords[1]), int(coords[2]), int(coords[3])],

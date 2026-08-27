@@ -58,6 +58,21 @@ def test_detector_returns_empty_on_blank_input():
     assert detections == []
 
 
+def test_detector_loads_and_runs_yolo_checkpoint(tmp_path):
+    """Verify the model-loading and inference path with a real temporary YOLO checkpoint."""
+    ultralytics = pytest.importorskip("ultralytics")
+    model = ultralytics.YOLO("yolov8n.yaml", verbose=False)
+    model.model.names = {0: "Pothole", 1: "Longitudinal Crack", 2: "Transverse Crack"}
+    checkpoint = tmp_path / "dummy_road_damage.pt"
+    model.save(str(checkpoint))
+
+    detector = RoadDamageDetector(weights_path=str(checkpoint))
+    detections = detector.detect(np.zeros((64, 64, 3), dtype=np.uint8))
+
+    assert detector.use_yolo is True
+    assert isinstance(detections, list)
+
+
 def test_severity_scorer(dummy_image):
     """Verifies severity calculation and priority routing."""
     detector = RoadDamageDetector()
@@ -76,7 +91,7 @@ def test_map_generation():
     initial_len = len(generator.damages)
     
     # Add point
-    generator.add_damage_point("Critical", "Pothole", 5)
+    generator.add_damage_point("Critical", "Pothole", 5, 28.6139, 77.2090)
     assert len(generator.damages) == initial_len + 1
     
     html = generator.generate_map_html()

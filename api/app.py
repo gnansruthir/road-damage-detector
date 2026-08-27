@@ -83,6 +83,7 @@ async def detect_damage(file: UploadFile = File(...)):
         
     file_id = str(uuid.uuid4())
     input_path = os.path.join(UPLOAD_DIR, f"{file_id}{ext}")
+    image_gps = extract_gps_coordinates(file_bytes)
     
     cleanup_generated_files()
 
@@ -135,7 +136,7 @@ async def detect_damage(file: UploadFile = File(...)):
         else:
             map_severity = "Small"
 
-        if metrics["detections"]:
+        if metrics["detections"] and image_gps is not None:
             target_finding = next(
                 det for det in metrics["detections"]
                 if det["severity"] == map_severity
@@ -144,7 +145,9 @@ async def detect_damage(file: UploadFile = File(...)):
                 lat, lng = civic_map.add_damage_point(
                     severity=map_severity,
                     class_name=target_finding["class"],
-                    priority=metrics["repair_priority"]
+                    priority=metrics["repair_priority"],
+                    latitude=image_gps[0],
+                    longitude=image_gps[1]
                 )
                 civic_map.generate_map_html(MAP_PATH)
         else:
@@ -198,6 +201,28 @@ def cleanup_generated_files():
             os.remove(path)
         except OSError:
             pass
+
+
+def extract_gps_coordinates(file_bytes):
+    """Return EXIF GPS latitude/longitude, or None when the image has no GPS."""
+    try:
+        with Image.open(BytesIO(file_bytes)) as image:
+            gps = image.getexif().get(34853)
+            if not gps:
+                return None
+
+            def to_decimal(value, reference):
+                degrees, minutes, seconds = [float(part) for part in value]
+                decimal = degrees + minutes / 60 + seconds / 3600
+                return -decimal if reference in ("S", "W") else decimal
+
+            latitude = to_decimal(gps[2], gps[1])
+            longitude = to_decimal(gps[4], gps[3])
+            if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
+                return None
+            return latitude, longitude
+    except (KeyError, TypeError, ValueError, UnidentifiedImageError, OSError):
+        return None
 
 @app.get("/api/map", response_class=HTMLResponse)
 def get_map():
