@@ -107,7 +107,7 @@ function initUpload() {
   });
 
   dropZone.addEventListener('dragleave', () => {
-    dropZone.classList.remove('dropzone');
+    dropZone.classList.remove('dragover');
   });
 
   dropZone.addEventListener('drop', (e) => {

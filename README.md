@@ -46,11 +46,24 @@ Install core packages (includes YOLOv8, OpenCV, FastAPI, and Folium):
 ```powershell
 pip install -r requirements.txt
 ```
+On Linux or macOS:
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+For local test tooling, install the development requirements:
+```bash
+python3 -m pip install -r requirements-dev.txt
+```
 
 ### 2. Launch Console
 Start the FastAPI uvicorn daemon:
 ```powershell
 python -m uvicorn api.app:app --reload
+```
+On Linux or macOS:
+```bash
+python3 -m uvicorn api.app:app --reload
 ```
 Access the dashboard in your web browser: **`http://127.0.0.1:8000`**
 
@@ -59,6 +72,11 @@ Execute the pytest suite (verifies CLAHE matrices, detector fallbacks, scoring l
 ```powershell
 pytest tests/
 ```
+
+The application uses the OpenCV heuristic fallback unless a compatible three-class
+checkpoint is supplied through `MODEL_WEIGHTS_PATH` or placed at `weights/best.pt`.
+The unauthenticated `/api/detect` endpoint is intended for demos; production deployments
+should add authentication, rate limiting, and durable storage before exposing it publicly.
 
 ---
 
