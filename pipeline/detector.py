@@ -29,7 +29,13 @@ class RoadDamageDetector:
         Otherwise, it falls back to OpenCV contours & Canny edge detection to locate
         actual cracks/potholes in the image using visual features only.
         """
+        if not hasattr(image_bgr, "shape"):
+            raise ValueError("Image must be a valid OpenCV image array.")
+        if len(image_bgr.shape) != 3 or image_bgr.shape[2] != 3:
+            raise ValueError("Image must be a 3-channel BGR image.")
         h, w, _ = image_bgr.shape
+        if h < 1 or w < 1:
+            raise ValueError("Image must not be empty.")
         detections = []
         self.last_mode = "cv_fallback"
 

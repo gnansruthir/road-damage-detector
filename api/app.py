@@ -27,13 +27,29 @@ FILE_RETENTION_SECONDS = 24 * 60 * 60
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Initialize detector and map
+
+def validate_content_length(content_length):
+    """Validate an optional request size declaration before reading the body."""
+    if not content_length:
+        return
+    try:
+        declared_length = int(content_length)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid Content-Length header.")
+    if declared_length < 0:
+        raise HTTPException(status_code=400, detail="Invalid Content-Length header.")
+    if declared_length > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Uploaded file exceeds the 10 MB limit.")
+
+
+# Initialize detector and map.
 configured_weights = os.getenv("MODEL_WEIGHTS_PATH")
 default_weights = os.path.join(BASE_DIR, "weights", "best.pt")
 weights_path = configured_weights or (default_weights if os.path.exists(default_weights) else None)
 detector = RoadDamageDetector(weights_path=weights_path)
 civic_map = CivicMapGenerator()
 map_lock = threading.Lock()
+
 # Write initial map file
 civic_map.generate_map_html(MAP_PATH)
 
@@ -63,13 +79,14 @@ async def detect_damage(file: UploadFile = File(...)):
     Receives upload, processes image using CLAHE and YOLO/OpenCV pipelines,
     extracts severity, plots it to Folium map, and returns metrics.
     """
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Uploaded file must have a filename.")
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in [".jpg", ".jpeg", ".png"]:
         raise HTTPException(status_code=400, detail="Unsupported file format.")
 
     content_length = file.headers.get("content-length")
-    if content_length and int(content_length) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="Uploaded file exceeds the 10 MB limit.")
+    validate_content_length(content_length)
 
     file_bytes = await file.read(MAX_UPLOAD_BYTES + 1)
     if len(file_bytes) > MAX_UPLOAD_BYTES:
@@ -91,8 +108,8 @@ async def detect_damage(file: UploadFile = File(...)):
     try:
         with open(input_path, "wb") as buffer:
             buffer.write(file_bytes)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to save upload: {e}")
+    except OSError:
+        raise HTTPException(status_code=500, detail="Failed to save uploaded file.")
         
     try:
         # 1. Apply CLAHE Preprocessing
@@ -156,8 +173,8 @@ async def detect_damage(file: UploadFile = File(...)):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
         
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Pipeline processing failed: {e}")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Pipeline processing failed.")
         
     return {
         "success": True,

@@ -4,11 +4,12 @@ import pytest
 import cv2
 import numpy as np
 from PIL import Image
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from api.app import app
+from api.app import app, validate_content_length
 from pipeline.clahe import apply_clahe
 from pipeline.detector import RoadDamageDetector
 from pipeline.severity import analyze_severity
@@ -57,6 +58,29 @@ def test_detector_returns_empty_on_blank_input():
 
     assert detections == []
     assert detector.last_mode == "cv_fallback"
+
+
+def test_detector_rejects_malformed_input():
+    with pytest.raises(ValueError, match="3-channel"):
+        RoadDamageDetector().detect(np.zeros((20, 20), dtype=np.uint8))
+
+
+def test_api_rejects_invalid_content_length(dummy_image):
+    with pytest.raises(HTTPException) as error:
+        validate_content_length("invalid")
+    assert error.value.status_code == 400
+
+
+def test_api_does_not_leak_pipeline_errors(monkeypatch, dummy_image):
+    monkeypatch.setattr("api.app.apply_clahe", lambda _: (_ for _ in ()).throw(RuntimeError("C:\\secret\\input.jpg")))
+    with open(dummy_image, "rb") as f:
+        response = client.post(
+            "/api/detect",
+            files={"file": ("test.png", f, "image/png")},
+        )
+    assert response.status_code == 500
+    assert response.json()["detail"] == "Pipeline processing failed."
+    assert "secret" not in response.text
 
 
 def test_detector_loads_and_runs_yolo_checkpoint(tmp_path):
