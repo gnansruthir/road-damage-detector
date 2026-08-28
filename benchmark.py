@@ -16,7 +16,7 @@ def main():
     parser.add_argument("--weights", required=True)
     parser.add_argument("--image", required=True)
     parser.add_argument("--iterations", type=int, default=50)
-    parser.add_argument("--device", default="0")
+    parser.add_argument("--device", default="cpu", help="Inference device, such as 'cpu' or '0' for the first CUDA GPU.")
     parser.add_argument("--imgsz", type=int, default=640)
     parser.add_argument("--output", default="BENCHMARK.md")
     args = parser.parse_args()

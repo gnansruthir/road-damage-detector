@@ -44,3 +44,26 @@ def test_prepare_splits_dry_run_does_not_create_outputs(tmp_path, monkeypatch, c
 
     assert not (tmp_path / "images").exists()
     assert "Dry run: would create 1 night validation images." in capsys.readouterr().out
+
+
+def test_prepare_yolo_splits_normalizes_mirror_layout(tmp_path, monkeypatch, capsys):
+    for split in ("train", "valid"):
+        image_dir = tmp_path / split / "images"
+        label_dir = tmp_path / split / "labels"
+        image_dir.mkdir(parents=True)
+        label_dir.mkdir(parents=True)
+        image_path = image_dir / f"{split}.jpg"
+        Image.new("RGB", (20, 20), (10, 10, 10) if split == "valid" else (100, 100, 100)).save(image_path)
+        (label_dir / f"{split}.txt").write_text("0 0.5 0.5 0.2 0.2\n2 0.4 0.4 0.1 0.1\n", encoding="utf-8")
+
+    output_dir = tmp_path / "normalized"
+    monkeypatch.setattr(prepare_dataset, "DATA_DIR", output_dir)
+    for split in ("train", "val", "val_night"):
+        (output_dir / "images" / split).mkdir(parents=True)
+        (output_dir / "labels" / split).mkdir(parents=True)
+    prepare_dataset.prepare_yolo_splits(tmp_path)
+
+    assert (output_dir / "images" / "train" / "train.jpg").exists()
+    assert (output_dir / "images" / "val" / "valid.jpg").exists()
+    assert (output_dir / "images" / "val_night" / "valid.jpg").exists()
+    assert "Pothole=2" in capsys.readouterr().out

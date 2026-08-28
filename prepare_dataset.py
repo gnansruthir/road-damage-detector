@@ -71,13 +71,89 @@ def get_image_brightness(image_path):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     return float(gray.mean())
 
-def prepare_splits(limit=None, dry_run=False):
+def _image_files(directory):
+    return sorted(
+        path for path in Path(directory).iterdir()
+        if path.suffix.lower() in {".jpg", ".jpeg", ".png"}
+    )
+
+
+def _copy_yolo_split(image_files, source_labels_dir, destination_split, dry_run=False):
+    records = []
+    for image_path in image_files:
+        label_path = Path(source_labels_dir) / f"{image_path.stem}.txt"
+        if not label_path.exists():
+            continue
+        labels = [line.strip() for line in label_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        labels = [line for line in labels if line.split()[0].isdigit() and int(line.split()[0]) in range(3)]
+        if not labels:
+            continue
+        records.append((image_path, labels, get_image_brightness(image_path)))
+        if not dry_run:
+            shutil.copy(image_path, DATA_DIR / "images" / destination_split / image_path.name)
+            (DATA_DIR / "labels" / destination_split / label_path.name).write_text(
+                "\n".join(labels), encoding="utf-8"
+            )
+    return records
+
+
+def _report_class_balance(records):
+    counts = [0, 0, 0]
+    for _, labels, _ in records:
+        for label in labels:
+            class_id = int(label.split()[0])
+            if class_id < len(counts):
+                counts[class_id] += 1
+    names = ["Pothole", "Longitudinal Crack", "Transverse Crack"]
+    print("Class instances: " + ", ".join(f"{name}={count}" for name, count in zip(names, counts)))
+    nonzero = [count for count in counts if count]
+    if nonzero and min(nonzero) * 10 < max(nonzero):
+        print("WARNING: a class has fewer than 10% of the instances of the largest class.")
+
+
+def prepare_yolo_splits(source_dir, limit=None, dry_run=False):
+    source_dir = Path(source_dir)
+    train_images = source_dir / "train" / "images"
+    train_labels = source_dir / "train" / "labels"
+    val_images = source_dir / "valid" / "images"
+    val_labels = source_dir / "valid" / "labels"
+    if not val_images.exists():
+        val_images = source_dir / "val" / "images"
+        val_labels = source_dir / "val" / "labels"
+    if not train_images.exists() or not train_labels.exists() or not val_images.exists() or not val_labels.exists():
+        raise FileNotFoundError("Roboflow export must contain train/images, train/labels, and valid/images, valid/labels.")
+
+    if limit is not None:
+        train_files = _image_files(train_images)[:limit]
+        val_files = _image_files(val_images)[:limit]
+    else:
+        train_files = _image_files(train_images)
+        val_files = _image_files(val_images)
+    train_records = _copy_yolo_split(train_files, train_labels, "train", dry_run)
+    val_records = _copy_yolo_split(val_files, val_labels, "val", dry_run)
+    _report_class_balance(train_records + val_records)
+    val_records.sort(key=lambda record: record[2])
+    night_records = val_records[:150]
+    if not dry_run:
+        for image_path, labels, _ in night_records:
+            shutil.copy(image_path, DATA_DIR / "images" / "val_night" / image_path.name)
+            (DATA_DIR / "labels" / "val_night" / f"{image_path.stem}.txt").write_text(
+                "\n".join(labels), encoding="utf-8"
+            )
+    print(f"Roboflow YOLO split: train={len(train_records)}, val={len(val_records)}, val_night={len(night_records)}")
+
+
+def prepare_splits(limit=None, dry_run=False, source_dir=None):
     # Setup directories
     if not dry_run:
         for split in ["train", "val", "val_night"]:
             (DATA_DIR / "images" / split).mkdir(parents=True, exist_ok=True)
             (DATA_DIR / "labels" / split).mkdir(parents=True, exist_ok=True)
         
+    if source_dir is not None:
+        prepare_yolo_splits(source_dir, limit=limit, dry_run=dry_run)
+        return
+
     src_images_dir = DATA_DIR / "India" / "train" / "images"
     src_xmls_dir = DATA_DIR / "India" / "train" / "annotations" / "xmls"
     
@@ -181,7 +257,9 @@ def prepare_splits(limit=None, dry_run=False):
     darkest = f" Darkest brightness mean: {night_candidates[0][2]:.2f}." if night_candidates else ""
     print(f"val_night split created with {len(night_candidates)} images.{darkest}")
 
-def create_yaml_configs():
+def create_yaml_configs(config_dir=Path(".")):
+    config_dir = Path(config_dir)
+    config_dir.mkdir(parents=True, exist_ok=True)
     # Main YAML config
     rdd2022_yaml = f"""# RDD2022 India Dataset Configuration
 path: {DATA_DIR}
@@ -192,8 +270,8 @@ names:
   1: Longitudinal Crack
   2: Transverse Crack
 """
-    Path("rdd2022.yaml").write_text(rdd2022_yaml, encoding="utf-8")
-    print("Created rdd2022.yaml")
+    (config_dir / "rdd2022.yaml").write_text(rdd2022_yaml, encoding="utf-8")
+    print(f"Created {config_dir / 'rdd2022.yaml'}")
 
     # Night YAML config
     rdd2022_night_yaml = f"""# RDD2022 India Night Validation Configuration
@@ -205,24 +283,28 @@ names:
   1: Longitudinal Crack
   2: Transverse Crack
 """
-    Path("rdd2022_night.yaml").write_text(rdd2022_night_yaml, encoding="utf-8")
-    print("Created rdd2022_night.yaml")
+    (config_dir / "rdd2022_night.yaml").write_text(rdd2022_night_yaml, encoding="utf-8")
+    print(f"Created {config_dir / 'rdd2022_night.yaml'}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Prepare RDD2022 India annotations for Ultralytics YOLO.")
     parser.add_argument("--limit", type=int, help="Process at most this many images (useful for verification).")
+    parser.add_argument("--source-dir", help="Existing Roboflow YOLO export directory, such as data/rdd2022.")
     parser.add_argument("--dry-run", action="store_true", help="Inspect and convert annotations without writing split files or YAML.")
     args = parser.parse_args()
     if args.limit is not None and args.limit < 1:
         parser.error("--limit must be at least 1")
 
-    if args.dry_run:
+    if args.source_dir:
+        if not Path(args.source_dir).exists():
+            raise FileNotFoundError(f"Source directory not found: {args.source_dir}")
+    elif args.dry_run:
         if not (DATA_DIR / "India").exists() and not list(DATA_DIR.glob("**/train/images")):
             raise FileNotFoundError("Dry run requires an already extracted dataset under data/.")
     else:
         download_dataset()
         extract_dataset()
-    prepare_splits(limit=args.limit, dry_run=args.dry_run)
+    prepare_splits(limit=args.limit, dry_run=args.dry_run, source_dir=args.source_dir)
     if not args.dry_run:
-        create_yaml_configs()
+        create_yaml_configs(args.source_dir or Path("."))
     print("All preparation completed successfully!")
