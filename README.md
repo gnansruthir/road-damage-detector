@@ -91,6 +91,12 @@ python eval.py --weights runs/road_damage/rdd2022_india/weights/best.pt --data p
 python benchmark.py --weights runs/road_damage/rdd2022_india/weights/best.pt --image path/to/validation.jpg --device 0
 ```
 
+To prepare the India split, run `python prepare_dataset.py`. The script writes
+`rdd2022.yaml` and `rdd2022_night.yaml`; use `python prepare_dataset.py --dry-run
+--limit 25` to inspect an already extracted dataset without creating output files.
+The hosted-GPU workflow is also documented in `train_rdd2022.ipynb`. Append the
+night evaluation to an existing report with `eval.py --append`.
+
 `eval.py` writes measured mAP values to `RESULTS.md`, and `benchmark.py` writes measured
 latency statistics to `BENCHMARK.md`. Those files should only be published after the commands
 are run against the real dataset and target hardware. The map is an EXIF GPS map, not a live
